@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Guest Book</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+
+      .container {
+        width: 50%;
+        margin: 0 auto;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      label {
+        display: block;
+        margin-top: 10px;
+      }
+
+      input[type="text"],
+      textarea,
+      input[type="submit"] {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      textarea {
+        height: 100px;
+      }
+
+      input[type="submit"] {
+        background-color: #4CAF50;
+        color: white;
+        cursor: pointer;
+      }
+
+      input[type="submit"]:hover {
+        background-color: #45a049;
+      }
+
+      #messageSaved {
+        color: green;
+        margin-top: 10px;
+      }
+
+      #showMessages {
+        margin-top: 20px;
+      }
+
+      .messageCard {
+        border: 1px solid #cccccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #f9f9f9;
+      }
+
+      .messageCard .messageContent {
+        font-style: italic;
+        color: #333333;
+      }
+
+      .messageCard .messageDetail {
+        font-size: 0.9em;
+        color: #666666;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Guest Book</h1>
+      <label for="msg">Message:</label>
+      <textarea id="msg"></textarea>
+
+      <label for="fname">First Name:</label>
+      <input type="text" id="fname" />
+
+      <label for="lname">Last Name:</label>
+      <input type="text" id="lname" />
+
+      <input type="submit" id="savemessage" value="Save Message" />
+      <p id="messageSaved"></p>
+
+      <input type="submit" id="getmessages" value="View all Messages" />
+      <div id="showMessages"></div>
+    </div>
+
+    <script>
+      const API_ENDPOINT = "https://7xzu1f4hc2.execute-api.us-east-1.amazonaws.com/prod";
+
+      // Function to handle POST request
+      document.getElementById("savemessage").onclick = function () {
+        const currentDate = new Date();
+        const formattedDate = currentDate.toLocaleString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+
+        const inputData = {
+          message: document.getElementById("msg").value,
+          firstName: document.getElementById("fname").value,
+          lastName: document.getElementById("lname").value,
+          date: formattedDate,
+        };
+
+        fetch(API_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(inputData),
+        })
+          .then((response) => {
+            if (response.ok) {
+              document.getElementById("messageSaved").textContent =
+                "Message Saved!";
+              document.getElementById("msg").value = "";
+              document.getElementById("fname").value = "";
+              document.getElementById("lname").value = "";
+            } else {
+              alert("Error saving the message.");
+            }
+          })
+          .catch(() => {
+            alert("An error occurred while saving the message.");
+          });
+      };
+
+      // Function to handle GET request
+      document.getElementById("getmessages").onclick = function () {
+        fetch(API_ENDPOINT, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const showMessages = document.getElementById("showMessages");
+            showMessages.innerHTML = ""; // Clear previous messages
+            data.forEach((message) => {
+              const messageCard = document.createElement("div");
+              messageCard.classList.add("messageCard");
+
+              const messageContent = document.createElement("div");
+              messageContent.classList.add("messageContent");
+              messageContent.textContent = message.msg;
+
+              const messageDetail = document.createElement("div");
+              messageDetail.classList.add("messageDetail");
+              messageDetail.textContent = `From: ${message.firstName} ${message.lastName} on ${message.date}`;
+
+              messageCard.appendChild(messageContent);
+              messageCard.appendChild(messageDetail);
+              showMessages.appendChild(messageCard);
+            });
+          })
+          .catch(() => {
+            alert("An error occurred while fetching the messages.");
+          });
+      };
+    </script>
+  </body>
+</html>
